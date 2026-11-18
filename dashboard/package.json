@@ -1,0 +1,13 @@
+{
+  "name": "total-dcim-dashboard",
+  "private": true,
+  "description": "Template dashboard Total DCIM, giao diện bằng Tailwind CSS v4",
+  "scripts": {
+    "build": "tailwindcss -i src/input.css -o dist/app.css --minify",
+    "dev": "tailwindcss -i src/input.css -o dist/app.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "4.3.4",
+    "tailwindcss": "4.3.4"
+  }
+}
