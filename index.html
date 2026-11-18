@@ -525,7 +525,8 @@ function drawChart() {
 const CAP = Array.from({length:12}, (_, i) => ({space: 62 + i * 1.4 + (i % 3) * .6, power: 55 + i * 2.3, net: 40 + i * 1.6}));
 function drawCap() {
   const el = $("#cap-chart"), W = el.clientWidth, H = el.clientHeight;
-  const m = {t:8, r:86, b:22, l:36}, iw = W - m.l - m.r, ih = H - m.t - m.b;
+  // lề phải r = nhãn dài nhất (JA "ネットワーク 58%" ~105px) + 8px khoảng cách
+  const m = {t:8, r:116, b:22, l:36}, iw = W - m.l - m.r, ih = H - m.t - m.b;
   const x = i => m.l + i / 11 * iw, y = v => m.t + ih - v / 100 * ih;
   const S = [["space", "--s1", "Không gian"], ["power", "--s2", "Điện"], ["net", "--s3", "Mạng"]];
   let g = "";
