@@ -2,7 +2,7 @@
 
 Màn hình tổng quan (Command Center Summary) cho hệ thống DCIM của trung tâm dữ liệu AI/HPC: menu chức năng bên trái, 6 widget tóm tắt và dải cảnh báo hợp nhất ở cuối trang.
 
-![Dashboard Total DCIM, giao diện tiếng Nhật, chế độ tối](docs/screenshot-ja.png)
+![Dashboard Total DCIM, giao diện tiếng Nhật, chế độ sáng](docs/screenshot-ja.png)
 
 - **Ngôn ngữ:** tiếng Anh và tiếng Nhật (nút EN / 日本語 trên thanh trên cùng).
 - **Giao diện:** sáng và tối; lần đầu mở theo cài đặt của hệ điều hành.
