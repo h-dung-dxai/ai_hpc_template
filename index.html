@@ -15,7 +15,7 @@
 <meta name="description" content="Dashboard for power, cooling, racks, security and alerts in an AI/HPC data center.">
 <meta name="theme-color" content="#0a0d14">
 <script>/* đặt theme trước khi vẽ để không nháy: lựa chọn đã lưu, nếu chưa có thì theo hệ điều hành */
-try { document.documentElement.dataset.theme = localStorage.getItem("dcim-theme") || (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"); }
+try { const s = localStorage.getItem("dcim-theme"); document.documentElement.dataset.theme = s === "light" || s === "dark" ? s : (matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"); }
 catch { document.documentElement.dataset.theme = "dark"; }</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -464,7 +464,8 @@ const racks = ROWS.flatMap(r => Array.from({length:12}, (_, c) => {
 }));
 
 const $ = s => document.querySelector(s);
-const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+// mọi giá trị từ DATA (sau này là API) phải qua esc() trước khi vào innerHTML, kể cả thuộc tính và class
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const fmt = (v, d=1) => v.toLocaleString(LOC[L],{minimumFractionDigits:d, maximumFractionDigits:d});
 const hhmm = h => `${String(Math.floor(h)).padStart(2,"0")}:${String(Math.round((h % 1) * 60)).padStart(2,"0")}`;
 
@@ -556,7 +557,7 @@ function drawHeat() {
       const v = k[metric], f = Math.max(0, Math.min(1, (v - M.lo) / (M.hi - M.lo)));
       const hot = k.temp > METRIC.temp.limit || k.kw > METRIC.kw.limit;
       h += `<button type="button" class="cell${hot ? " hot" : ""}" style="background:${ramp[Math.round(f * (ramp.length - 1))]}"
-        data-id="${k.id}" aria-label="${k.id}: ${fmt(k.temp)} °C, ${fmt(k.kw)} kW${hot ? ", " + t("vượt ngưỡng") : ""}"></button>`;
+        data-id="${esc(k.id)}" aria-label="${esc(k.id)}: ${fmt(k.temp)} °C, ${fmt(k.kw)} kW${hot ? ", " + t("vượt ngưỡng") : ""}"></button>`;
     });
   });
   $("#heat").innerHTML = h;
@@ -564,7 +565,7 @@ function drawHeat() {
 const heatTip = $("#heat-tip"), heatCard = $("#facilities");
 function showRack(btn) {
   const k = racks.find(r => r.id === btn.dataset.id), hot = btn.classList.contains("hot");
-  heatTip.innerHTML = `<div class="num mb-1 text-muted">${k.id}</div>
+  heatTip.innerHTML = `<div class="num mb-1 text-muted">${esc(k.id)}</div>
     <div class="flex items-center justify-between gap-2"><span>${t("Nhiệt độ đầu vào")}</span><b class="num">${fmt(k.temp)} °C</b></div>
     <div class="flex items-center justify-between gap-2"><span>${t("Công suất")}</span><b class="num">${fmt(k.kw)} kW</b></div>
     ${hot ? `<div class="mt-1 flex items-center justify-between gap-2"><span class="st critical">${t("Vượt ngưỡng")}</span></div>` : ""}`;
@@ -617,14 +618,14 @@ function renderLists() {
   $("#chart-table tbody").innerHTML = series.filter((_, i) => i % 4 === 0)
     .map(d => `<tr><td class="num">${hhmm(d.h)}</td><td class="num text-right">${fmt(d.it)}</td><td class="num text-right">${fmt(d.cool)}</td></tr>`).join("");
   // shortcut: summary chỉ hiện 3 thiết bị tải cao nhất; danh sách đủ thuộc màn hình chi tiết
-  $("#infra").innerHTML = [...DATA.infra].sort((a, b) => b.pct - a.pct).slice(0, 3).map(d => `<div class="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 border-t border-line py-2.5 first:border-t-0 first:pt-0"><span class="font-medium">${esc(d.n)}</span><span class="st ${d.st}">${esc(t(d.lbl))}</span>
-    <span class="text-xs text-muted">${esc(t(d.m))}</span><span class="num text-xs text-muted">${d.pct}%</span><div class="meter col-span-full" aria-hidden="true"><b style="width:${d.pct}%"></b></div></div>`).join("");
-  $("#pipe").innerHTML = DATA.pipe.map(d => `<li class="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 border-t border-line py-2 first:border-t-0 first:pt-0"><span class="font-medium">${esc(d.n)}</span><span class="st ${d.st}">${esc(t(d.lbl))}</span><span class="col-span-full text-xs text-muted">${esc(t(d.m))}</span></li>`).join("");
+  $("#infra").innerHTML = [...DATA.infra].sort((a, b) => b.pct - a.pct).slice(0, 3).map(d => `<div class="grid grid-cols-[1fr_auto] items-center gap-x-3 gap-y-1 border-t border-line py-2.5 first:border-t-0 first:pt-0"><span class="font-medium">${esc(d.n)}</span><span class="st ${esc(d.st)}">${esc(t(d.lbl))}</span>
+    <span class="text-xs text-muted">${esc(t(d.m))}</span><span class="num text-xs text-muted">${+d.pct}%</span><div class="meter col-span-full" aria-hidden="true"><b style="width:${+d.pct}%"></b></div></div>`).join("");
+  $("#pipe").innerHTML = DATA.pipe.map(d => `<li class="grid grid-cols-[1fr_auto] gap-x-3 gap-y-0.5 border-t border-line py-2 first:border-t-0 first:pt-0"><span class="font-medium">${esc(d.n)}</span><span class="st ${esc(d.st)}">${esc(t(d.lbl))}</span><span class="col-span-full text-xs text-muted">${esc(t(d.m))}</span></li>`).join("");
   $("#sec-events").innerHTML = DATA.security.map(d => `<li class="rounded-md border-l-2 ${BORDER[d.s]} bg-surface-2/60 px-3 py-2">
-    <div class="flex items-center justify-between gap-2"><span class="st ${d.s}">${esc(t(d.type))}</span><span class="num text-xs text-muted">${d.t}</span></div>
+    <div class="flex items-center justify-between gap-2"><span class="st ${esc(d.s)}">${esc(t(d.type))}</span><span class="num text-xs text-muted">${esc(d.t)}</span></div>
     <div class="mt-0.5 flex items-center justify-between gap-2 text-xs text-muted"><span>${esc(t(d.loc))}</span><a class="link text-xs" href="#">${t("Xem clip")}</a></div></li>`).join("");
-  $("#doors").innerHTML = DATA.doors.map(d => `<li class="flex items-center justify-between gap-3 border-t border-line py-2 text-sm first:border-t-0 first:pt-0"><span>${esc(t(d.n))}</span><span class="st ${d.st}">${esc(t(d.lbl))}</span></li>`).join("");
-  $("#rack-use").innerHTML = DATA.rackUse.map(r => `<div class="grid grid-cols-[56px_1fr_auto] items-center gap-2 text-xs"><span class="text-muted">${t("Dãy")} ${r.r}</span><div class="meter h-1.5" aria-hidden="true"><b style="width:${Math.round(r.used / r.total * 100)}%"></b></div><span class="num text-right whitespace-nowrap">${r.used} / ${r.total} U</span></div>`).join("");
+  $("#doors").innerHTML = DATA.doors.map(d => `<li class="flex items-center justify-between gap-3 border-t border-line py-2 text-sm first:border-t-0 first:pt-0"><span>${esc(t(d.n))}</span><span class="st ${esc(d.st)}">${esc(t(d.lbl))}</span></li>`).join("");
+  $("#rack-use").innerHTML = DATA.rackUse.map(r => `<div class="grid grid-cols-[56px_1fr_auto] items-center gap-2 text-xs"><span class="text-muted">${t("Dãy")} ${esc(r.r)}</span><div class="meter h-1.5" aria-hidden="true"><b style="width:${Math.round(r.used / r.total * 100)}%"></b></div><span class="num text-right whitespace-nowrap">${+r.used} / ${+r.total} U</span></div>`).join("");
   $("#split").innerHTML = `<div class="flex h-2.5 gap-0.5 overflow-hidden rounded-xs" aria-hidden="true"><b class="bg-s1" style="flex:74"></b><b class="bg-s2" style="flex:23"></b><b class="bg-muted/50" style="flex:3"></b></div>
     <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted"><span class="inline-flex items-center gap-1.5"><i class="size-2 rounded-xs bg-s1"></i>${t("Tải IT")} <b class="num font-medium text-ink">74%</b></span><span class="inline-flex items-center gap-1.5"><i class="size-2 rounded-xs bg-s2"></i>${t("Làm mát")} <b class="num font-medium text-ink">23%</b></span><span class="inline-flex items-center gap-1.5"><i class="size-2 rounded-xs bg-muted/50"></i>${t("Tổn hao và khác")} <b class="num font-medium text-ink">3%</b></span></div>`;
   document.querySelectorAll("[data-spark]").forEach(e => { const [v, c] = SPARK[e.dataset.spark]; e.innerHTML = spark(v, c); });
@@ -640,7 +641,7 @@ function renderLists() {
   $("#unified").innerHTML = Object.keys(SEV).map(s => `<span class="st ${s}">${t(SEV[s])} <b class="num">${DATA.alerts.filter(a => a.s === s).length}</b></span>`).join("")
     + `<span class="inline-flex items-center gap-1.5 text-xs font-medium"><svg class="size-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></svg>${t("An ninh")} <b class="num">${DATA.security.length}</b></span>`;
   const a = DATA.alerts[0];
-  $("#latest").innerHTML = `${t("Mới nhất")}: <span class="num">${a.t}</span> · <span class="num">${esc(a.d)}</span> · ${esc(t(a.msg))}`;
+  $("#latest").innerHTML = `${t("Mới nhất")}: <span class="num">${esc(a.t)}</span> · <span class="num">${esc(a.d)}</span> · ${esc(t(a.msg))}`;
 }
 
 /* ---------- chữ tĩnh trong HTML: dịch theo khóa tiếng Việt, giữ bản gốc để đổi qua lại ---------- */
